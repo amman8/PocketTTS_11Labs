@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pocket TTS | ElevenLabs Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-item active">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9.5L12 4l9 5.5V19a2 2 0 01-2 2H5a2 2 0 01-2-2V9.5z" />
+            </svg>
+        </div>
+        <div class="sidebar-item">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4l3 3" />
+            </svg>
+        </div>
+        <div class="sidebar-item" id="hf-settings-trigger">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" />
+                <path
+                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+        </div>
+    </aside>
+
+    <div class="main-layout">
+        <nav class="top-nav">
+            <h2>Text to Speech</h2>
+            <div id="hf-status" class="hf-status">Using Default HF Token</div>
+        </nav>
+
+        <div class="workspace">
+            <div class="text-area-container">
+                <textarea id="text-input" placeholder="Start typing..."></textarea>
+                <div class="char-count"><span id="current-char">0</span> / 5,000 characters</div>
+            </div>
+
+            <div class="add-speaker-btn" id="add-speaker-trigger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add speaker
+            </div>
+
+            <div class="bottom-bar">
+                <div class="credit-info">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 8v4l3 3" />
+                    </svg>
+                    Pocket TTS Optimized
+                </div>
+                <button id="generate-btn" class="generate-btn">Generate speech</button>
+            </div>
+        </div>
+
+        <div id="audio-output" class="audio-output-fixed">
+            <audio id="audio-player" controls></audio>
+            <a id="download-link" href="#" class="download-link" title="Download WAV">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <aside class="settings-panel">
+        <div class="settings-header">
+            <div class="settings-tab active" id="settings-tab-btn">Settings</div>
+            <div class="settings-tab" id="history-tab-btn">History</div>
+        </div>
+
+        <div class="settings-content" id="settings-content">
+            <div class="setting-group">
+                <div class="setting-label">Voice</div>
+                <div id="voice-display" class="custom-select">
+                    <span id="selected-voice-name">Alba</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                </div>
+                <select id="voice-select" style="display: none;">
+                    <!-- Voices populated by JS -->
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">Model</div>
+                <div class="custom-select">Pocket TTS v1 (CPU)</div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>Stability</span>
+                    <span id="stability-val">50%</span>
+                </div>
+                <p class="setting-desc">Lowering stability can make the voice more expressive but less consistent.</p>
+                <input type="range" id="stability-slider" min="0" max="100" value="50">
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>Speed</span>
+                    <span id="speed-val">1.0x</span>
+                </div>
+                <input type="range" id="speed-slider" min="50" max="200" value="100">
+            </div>
+
+            <div class="setting-group" id="hf-token-section">
+                <div class="setting-label">Hugging Face Token</div>
+                <p class="setting-desc">Required for gated cloning features.</p>
+                <input type="password" id="hf-token-input" class="hf-token-input" placeholder="hf_...">
+            </div>
+        </div>
+
+        <div class="settings-content" id="history-content" style="display: none; padding: 24px;">
+            <div id="history-list" class="history-list">
+                <!-- History items populated by JS -->
+                <p class="setting-desc" style="text-align: center;">No history yet.</p>
+            </div>
+        </div>
+    </aside>
+
+    <div class="modal" id="voice-modal">
+        <div class="modal-content">
+            <h3>Clone New Voice</h3>
+            <p class="setting-desc">Upload a short (5-10s) audio sample to clone a voice.</p>
+            <input type="file" id="voice-file-input" accept="audio/*" class="file-input">
+            <div id="cloned-file-name" class="cloned-file-name"></div>
+            <button class="generate-btn" id="save-clone-btn" style="width: 100%;">Use this sample</button>
+            <button class="cancel-btn" id="close-modal">Cancel</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
