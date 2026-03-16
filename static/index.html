@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pocket TTS | ElevenLabs Clone</title>
+    <meta name="description" content="Pocket TTS Premium — A high-performance, CPU-optimized Text-to-Speech web application with voice cloning, zero-shot generation, and a premium UI.">
+    <title>Pocket TTS Premium | Text to Speech</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,86 +13,134 @@
 </head>
 
 <body>
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-item active">
+        <div class="sidebar-item active" id="sidebar-home">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9.5L12 4l9 5.5V19a2 2 0 01-2 2H5a2 2 0 01-2-2V9.5z" />
             </svg>
+            <span class="tooltip">Home</span>
         </div>
-        <div class="sidebar-item">
+        <div class="sidebar-item" id="sidebar-history">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 8v4l3 3" />
             </svg>
+            <span class="tooltip">History</span>
         </div>
-        <div class="sidebar-item" id="hf-settings-trigger">
+        <div class="sidebar-item" id="sidebar-settings">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" />
-                <path
-                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
             </svg>
+            <span class="tooltip">Settings</span>
         </div>
     </aside>
 
+    <!-- Main Content -->
     <div class="main-layout">
         <nav class="top-nav">
-            <h2>Text to Speech</h2>
-            <div id="hf-status" class="hf-status">Using Default HF Token</div>
+            <h2>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                    <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                Text to Speech
+            </h2>
+            <div class="top-nav-right">
+                <div id="hf-status" class="hf-status">Using Default HF Token</div>
+                <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+                    <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                    </svg>
+                    <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+            </div>
         </nav>
 
         <div class="workspace">
-            <div class="text-area-container">
-                <textarea id="text-input" placeholder="Start typing..."></textarea>
-                <div class="char-count"><span id="current-char">0</span> / 5,000 characters</div>
+            <div class="text-area-container" id="text-area-container">
+                <textarea id="text-input" placeholder="Start typing or choose a preset below..."></textarea>
+                <div class="char-count" id="char-count-display"><span id="current-char">0</span> / 5,000</div>
             </div>
 
-            <div class="add-speaker-btn" id="add-speaker-trigger">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14M5 12h14" />
-                </svg>
-                Add speaker
+            <div class="action-row">
+                <div class="add-speaker-btn" id="add-speaker-trigger">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Clone voice
+                </div>
+
+                <div class="presets-wrapper">
+                    <button class="presets-btn" id="presets-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <path d="M14 2v6h6"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <line x1="10" y1="9" x2="8" y2="9"/>
+                        </svg>
+                        Text presets
+                    </button>
+                    <div class="presets-dropdown" id="presets-dropdown">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
             </div>
 
             <div class="bottom-bar">
                 <div class="credit-info">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v4l3 3" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                     </svg>
                     Pocket TTS Optimized
                 </div>
-                <button id="generate-btn" class="generate-btn">Generate speech</button>
+                <div class="bottom-right">
+                    <span class="shortcut-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+                    <button id="generate-btn" class="generate-btn">Generate speech</button>
+                </div>
             </div>
         </div>
 
         <div id="audio-output" class="audio-output-fixed">
+            <canvas id="waveform-canvas"></canvas>
             <audio id="audio-player" controls></audio>
             <a id="download-link" href="#" class="download-link" title="Download WAV">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                 </svg>
             </a>
         </div>
     </div>
 
-    <aside class="settings-panel">
+    <!-- Settings / History Panel -->
+    <aside class="settings-panel" id="settings-panel">
         <div class="settings-header">
             <div class="settings-tab active" id="settings-tab-btn">Settings</div>
             <div class="settings-tab" id="history-tab-btn">History</div>
         </div>
 
+        <!-- Settings Tab -->
         <div class="settings-content" id="settings-content">
             <div class="setting-group">
                 <div class="setting-label">Voice</div>
-                <div id="voice-display" class="custom-select">
-                    <span id="selected-voice-name">Alba</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 9l6 6 6-6" />
-                    </svg>
+                <div class="custom-select-wrapper">
+                    <select id="voice-select" class="real-select">
+                        <option value="alba">Alba</option>
+                    </select>
                 </div>
-                <select id="voice-select" style="display: none;">
-                    <!-- Voices populated by JS -->
-                </select>
             </div>
 
             <div class="setting-group">
@@ -104,8 +153,11 @@
                     <span>Stability</span>
                     <span id="stability-val">50%</span>
                 </div>
-                <p class="setting-desc">Lowering stability can make the voice more expressive but less consistent.</p>
-                <input type="range" id="stability-slider" min="0" max="100" value="50">
+                <p class="setting-desc">Lowering stability makes the voice more expressive but less consistent.</p>
+                <div class="slider-track">
+                    <div class="slider-fill" id="stability-fill" style="width: 50%;"></div>
+                    <input type="range" id="stability-slider" min="0" max="100" value="50">
+                </div>
             </div>
 
             <div class="setting-group">
@@ -113,7 +165,10 @@
                     <span>Speed</span>
                     <span id="speed-val">1.0x</span>
                 </div>
-                <input type="range" id="speed-slider" min="50" max="200" value="100">
+                <div class="slider-track">
+                    <div class="slider-fill" id="speed-fill" style="width: 33%;"></div>
+                    <input type="range" id="speed-slider" min="50" max="200" value="100">
+                </div>
             </div>
 
             <div class="setting-group" id="hf-token-section">
@@ -123,18 +178,43 @@
             </div>
         </div>
 
+        <!-- History Tab -->
         <div class="settings-content" id="history-content" style="display: none; padding: 24px;">
+            <div class="history-header">
+                <span class="setting-label" style="margin-bottom: 0; font-size: 0.95rem;">Recent</span>
+                <div class="history-actions">
+                    <button id="export-history-btn" class="history-action-btn" title="Export as JSON">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        Export
+                    </button>
+                    <button id="clear-history-btn" class="history-action-btn danger" title="Clear all history">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <input type="text" class="history-search" id="history-search" placeholder="Search history...">
             <div id="history-list" class="history-list">
-                <!-- History items populated by JS -->
-                <p class="setting-desc" style="text-align: center;">No history yet.</p>
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8v4l3 3"/>
+                    </svg>
+                    <p>No history yet. Generate some speech!</p>
+                </div>
             </div>
         </div>
     </aside>
 
+    <!-- Voice Clone Modal -->
     <div class="modal" id="voice-modal">
         <div class="modal-content">
-            <h3>Clone New Voice</h3>
-            <p class="setting-desc">Upload a short (5-10s) audio sample to clone a voice.</p>
+            <h3>🎤 Clone New Voice</h3>
+            <p class="setting-desc">Upload a short (5–10 second) audio sample to clone a voice. For best results, use a clean recording with minimal background noise.</p>
             <input type="file" id="voice-file-input" accept="audio/*" class="file-input">
             <div id="cloned-file-name" class="cloned-file-name"></div>
             <button class="generate-btn" id="save-clone-btn" style="width: 100%;">Use this sample</button>

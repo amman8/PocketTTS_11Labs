@@ -103,12 +103,73 @@ async def generate_speech(
         voice_label = voice
         
         if voice_file:
-            temp_voice = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+            # Save uploaded file with its original extension
+            original_ext = os.path.splitext(voice_file.filename)[1] or ".wav"
+            temp_original = tempfile.NamedTemporaryFile(delete=False, suffix=original_ext)
+            temp_original_path = temp_original.name
+            temp_original.close()
+            
             content = await voice_file.read()
-            with open(temp_voice.name, "wb") as f:
+            with open(temp_original_path, "wb") as f:
                 f.write(content)
-            voice_input = temp_voice.name
-            temp_voice_path = temp_voice.name
+            
+            # Ensure file is valid PCM WAV (pocket_tts strictly requires this)
+            import wave
+            is_valid_wav = False
+            try:
+                with wave.open(temp_original_path, "rb") as wf:
+                    is_valid_wav = True
+            except Exception:
+                pass
+            
+            if is_valid_wav:
+                # Already a valid WAV — use directly
+                temp_voice_path = temp_original_path
+            else:
+                # Not a WAV — convert using torch (already installed)
+                try:
+                    import torchaudio
+                    waveform, sr = torchaudio.load(temp_original_path)
+                except Exception:
+                    # Fallback: try loading with scipy for odd WAV variants
+                    try:
+                        sr_read, data = scipy.io.wavfile.read(temp_original_path)
+                        waveform = torch.from_numpy(data.astype(np.float32))
+                        if waveform.dim() == 1:
+                            waveform = waveform.unsqueeze(0)
+                        else:
+                            waveform = waveform.T
+                        sr = sr_read
+                    except Exception as e:
+                        os.remove(temp_original_path)
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Unsupported audio format. Please upload a .wav file (standard PCM format)."
+                        )
+                
+                # Convert to mono if stereo
+                if waveform.shape[0] > 1:
+                    waveform = waveform.mean(dim=0, keepdim=True)
+                
+                # Save as standard PCM 16-bit WAV
+                temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+                temp_voice_path = temp_wav.name
+                temp_wav.close()
+                
+                audio_np = waveform.squeeze().numpy()
+                # Normalize to int16 range
+                if audio_np.max() <= 1.0 and audio_np.min() >= -1.0:
+                    audio_np = (audio_np * 32767).astype(np.int16)
+                else:
+                    audio_np = audio_np.astype(np.int16)
+                
+                scipy.io.wavfile.write(temp_voice_path, sr, audio_np)
+                
+                # Clean up original
+                if os.path.exists(temp_original_path):
+                    os.remove(temp_original_path)
+            
+            voice_input = temp_voice_path
             voice_label = f"Cloned ({voice_file.filename})"
         
         # Audio generation
@@ -116,8 +177,14 @@ async def generate_speech(
             voice_state = model.get_state_for_audio_prompt(voice_input)
             audio_tensor = model.generate_audio(voice_state, text)
         finally:
+            # Cleanup temp file with retry (model may briefly hold it)
             if temp_voice_path and os.path.exists(temp_voice_path):
-                os.remove(temp_voice_path)
+                for attempt in range(3):
+                    try:
+                        os.remove(temp_voice_path)
+                        break
+                    except PermissionError:
+                        time.sleep(0.5)
         
         # Save output
         gen_id = int(time.time() * 1000)
@@ -154,14 +221,17 @@ async def get_audio(filename: str):
     file_path = os.path.join(generations_dir, filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404)
-    return FileResponse(file_path, media_type="audio/wav")
+    # Stream for playback, but suggest a name just in case
+    return FileResponse(file_path, media_type="audio/wav", filename=filename)
 
 @app.get("/api/download/{filename}")
 async def download_audio(filename: str):
     file_path = os.path.join(generations_dir, filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404)
-    return FileResponse(file_path, media_type="audio/wav", filename="pocket_tts_generation.wav")
+    # Using application/octet-stream is safer for programmatic fetch/blob downloads
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return FileResponse(file_path, media_type="application/octet-stream", filename=filename, headers=headers)
 
 @app.get("/voices")
 async def get_voices():
@@ -170,6 +240,51 @@ async def get_voices():
 @app.get("/history")
 async def get_generation_history():
     return get_history()
+
+@app.delete("/api/history/{gen_id}")
+async def delete_history_item(gen_id: int):
+    history = get_history()
+    item_to_delete = next((item for item in history if item["id"] == gen_id), None)
+    
+    if not item_to_delete:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Delete file
+    file_path = os.path.join(generations_dir, item_to_delete["filename"])
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    # Update history JSON
+    new_history = [item for item in history if item["id"] != gen_id]
+    with open(history_file, "w") as f:
+        json.dump(new_history, f, indent=2)
+    
+    return {"success": True}
+
+@app.get("/api/history/export")
+async def export_history():
+    if not os.path.exists(history_file):
+        return JSONResponse(content=[])
+    return FileResponse(
+        history_file,
+        media_type="application/json",
+        filename="pocket_tts_history.json",
+        headers={"Content-Disposition": 'attachment; filename="pocket_tts_history.json"'}
+    )
+
+@app.delete("/api/history/clear")
+async def clear_all_history():
+    # Delete all files in generations dir
+    for filename in os.listdir(generations_dir):
+        file_path = os.path.join(generations_dir, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    
+    # Clear history JSON
+    with open(history_file, "w") as f:
+        json.dump([], f, indent=2)
+    
+    return {"success": True}
 
 # Serve static frontend
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
